@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  reindexer:
+    image: reindexer/reindexer:v4.9.0
+    ports:
+      - "9088:9088"
+    volumes:
+      - ./reindexer_data:/reindexer_server_data
+
+  go_microservice:
+    build: ./micro
+    ports:
+      - "8080:8080"
+    depends_on:
+      - reindexer
+    environment:
+      - REINDEXER_URL=http://reindexer:9088
