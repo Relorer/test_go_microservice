@@ -5,6 +5,7 @@ services:
     image: reindexer/reindexer:v4.9.0
     ports:
       - "9088:9088"
+      - "6534:6534"
     volumes:
       - ./reindexer_data:/reindexer_server_data
 
@@ -15,4 +16,9 @@ services:
     depends_on:
       - reindexer
     environment:
-      - REINDEXER_URL=http://reindexer:9088
+      - REINDEXER.HOST=localhost
+      - REINDEXER.PORT=6534
+      - REINDEXER.DATABASE=test
+      - REINDEXER.USERNAME=user
+      - REINDEXER.PASSWORD=pass
+      - APP.HOST=3000

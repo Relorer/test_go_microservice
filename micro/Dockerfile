@@ -7,5 +7,6 @@ FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/  
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo/  
 
-COPY build/main /
+COPY bin/main /
+COPY config.yaml /
 CMD ["/main"]
