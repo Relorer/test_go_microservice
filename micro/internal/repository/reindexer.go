@@ -18,7 +18,7 @@ type ReindexerParams struct {
 	Database string
 }
 
-func NewReindexerDB(params *ReindexerParams) (*ReindexerRepository, error) {
+func NewReindexerRepository(params *ReindexerParams) (*ReindexerRepository, error) {
 	conn := reindexer.NewReindex(fmt.Sprintf("cproto://%s:%d/%s", params.Host, params.Port, params.Database), reindexer.WithCreateDBIfMissing())
 
 	if conn.Status().Err != nil {

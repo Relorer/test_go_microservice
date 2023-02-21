@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type DB interface {
+type Repository interface {
 	GetDocuments(limit, offset int) ([]*model.Document, error)
 	CreateDocument(document *model.Document) (*model.Document, error)
 	GetDocument(id int64) (*model.Document, error)
@@ -17,15 +17,15 @@ type DB interface {
 	DeleteDocument(id int64) error
 }
 
-type ReindexerHandler struct {
-	db DB
+type DefaultHandler struct {
+	repo Repository
 }
 
-func NewHandler(db DB) *ReindexerHandler {
-	return &ReindexerHandler{db: db}
+func NewHandler(repo Repository) *DefaultHandler {
+	return &DefaultHandler{repo: repo}
 }
 
-func (h *ReindexerHandler) GetDocuments(c *gin.Context) {
+func (h *DefaultHandler) GetDocuments(c *gin.Context) {
 	limit := c.DefaultQuery("limit", "10")
 	offset := c.DefaultQuery("offset", "0")
 
@@ -43,7 +43,7 @@ func (h *ReindexerHandler) GetDocuments(c *gin.Context) {
 		return
 	}
 
-	results, err := h.db.GetDocuments(limitInt, offsetInt)
+	results, err := h.repo.GetDocuments(limitInt, offsetInt)
 	if err != nil {
 		log.Printf("Error fetching documents: %s", err.Error())
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -53,7 +53,7 @@ func (h *ReindexerHandler) GetDocuments(c *gin.Context) {
 	c.JSON(http.StatusOK, results)
 }
 
-func (h *ReindexerHandler) CreateDocument(c *gin.Context) {
+func (h *DefaultHandler) CreateDocument(c *gin.Context) {
 	document := &model.Document{}
 	err := c.ShouldBindJSON(&document)
 	if err != nil {
@@ -62,7 +62,7 @@ func (h *ReindexerHandler) CreateDocument(c *gin.Context) {
 		return
 	}
 	log.Println(document)
-	document, err = h.db.CreateDocument(document)
+	document, err = h.repo.CreateDocument(document)
 	if err != nil {
 		log.Printf("Error inserting document: %s", err.Error())
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -73,7 +73,7 @@ func (h *ReindexerHandler) CreateDocument(c *gin.Context) {
 	c.JSON(http.StatusCreated, document)
 }
 
-func (h *ReindexerHandler) GetDocument(c *gin.Context) {
+func (h *DefaultHandler) GetDocument(c *gin.Context) {
 	id := c.Param("id")
 
 	idInt, err := strconv.ParseInt(id, 10, 64)
@@ -83,7 +83,7 @@ func (h *ReindexerHandler) GetDocument(c *gin.Context) {
 		return
 	}
 
-	result, err := h.db.GetDocument(idInt)
+	result, err := h.repo.GetDocument(idInt)
 	if err != nil {
 		log.Printf("Error fetching document: %s", err.Error())
 		c.AbortWithStatus(http.StatusNotFound)
@@ -93,7 +93,7 @@ func (h *ReindexerHandler) GetDocument(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-func (h *ReindexerHandler) UpdateDocument(c *gin.Context) {
+func (h *DefaultHandler) UpdateDocument(c *gin.Context) {
 	document := model.Document{}
 	err := c.ShouldBindJSON(&document)
 	if err != nil {
@@ -111,7 +111,7 @@ func (h *ReindexerHandler) UpdateDocument(c *gin.Context) {
 		return
 	}
 
-	err = h.db.UpdateDocument(&document)
+	err = h.repo.UpdateDocument(&document)
 	if err != nil {
 		log.Printf("Error updating document: %s", err.Error())
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -122,7 +122,7 @@ func (h *ReindexerHandler) UpdateDocument(c *gin.Context) {
 
 }
 
-func (h *ReindexerHandler) DeleteDocument(c *gin.Context) {
+func (h *DefaultHandler) DeleteDocument(c *gin.Context) {
 	id := c.Param("id")
 
 	idInt, err := strconv.ParseInt(id, 10, 64)
@@ -132,7 +132,7 @@ func (h *ReindexerHandler) DeleteDocument(c *gin.Context) {
 		return
 	}
 
-	err = h.db.DeleteDocument(idInt)
+	err = h.repo.DeleteDocument(idInt)
 	if err != nil {
 		log.Printf("Error deleting document: %s", err.Error())
 		c.AbortWithStatus(http.StatusInternalServerError)

@@ -8,11 +8,12 @@ import (
 	"relorer/test_go_microservice/config"
 	"relorer/test_go_microservice/internal/repository"
 	"relorer/test_go_microservice/internal/server"
+	"relorer/test_go_microservice/internal/util"
 )
 
 func reindexerConnectWithRetry(params *repository.ReindexerParams, delay time.Duration) *repository.ReindexerRepository {
 	for {
-		db, err := repository.NewReindexerDB(params)
+		db, err := repository.NewReindexerRepository(params)
 
 		if err != nil {
 			log.Printf("Error connecting: %s. Retry in %s", err, delay.String())
@@ -37,9 +38,13 @@ func main() {
 		Database: conf.Reindexer.Database,
 	}
 
-	reindexerDb := reindexerConnectWithRetry(params, 5*time.Second)
+	reindexerRepo := reindexerConnectWithRetry(params, 5*time.Second)
 
-	serverHandler := server.NewHandler(reindexerDb)
+	cache := util.NewCache(15*time.Minute, 15*time.Minute)
+
+	cacheRepo := repository.NewCacheRepository(cache, reindexerRepo)
+
+	serverHandler := server.NewHandler(cacheRepo)
 
 	server.StartServer(serverHandler, conf.App.Port)
 
