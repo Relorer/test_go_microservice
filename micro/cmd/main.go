@@ -2,19 +2,20 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"relorer/test_go_microservice/config"
-	"relorer/test_go_microservice/internal/db"
+	"relorer/test_go_microservice/internal/repository"
 	"relorer/test_go_microservice/internal/server"
 )
 
-func reindexerConnectWithRetry(params *db.ReindexerParams, delay time.Duration) *db.ReindexerDB {
+func reindexerConnectWithRetry(params *repository.ReindexerParams, delay time.Duration) *repository.ReindexerRepository {
 	for {
-		db, err := db.NewReindexerDB(params)
+		db, err := repository.NewReindexerDB(params)
 
 		if err != nil {
-			fmt.Println(err)
+			log.Printf("Error connecting: %s. Retry in %s", err, delay.String())
 		} else {
 			return db
 		}
@@ -30,7 +31,7 @@ func main() {
 		panic(fmt.Errorf("fatal error config file: %s", err))
 	}
 
-	params := &db.ReindexerParams{
+	params := &repository.ReindexerParams{
 		Host:     conf.Reindexer.Host,
 		Port:     conf.Reindexer.Port,
 		Database: conf.Reindexer.Database,

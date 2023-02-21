@@ -10,11 +10,11 @@ import (
 )
 
 type DB interface {
-	GetDocuments(limit, offset int) ([]model.Document, error)
+	GetDocuments(limit, offset int) ([]*model.Document, error)
 	CreateDocument(document *model.Document) (*model.Document, error)
-	GetDocument(id string) (*model.Document, error)
+	GetDocument(id int64) (*model.Document, error)
 	UpdateDocument(document *model.Document) error
-	DeleteDocument(id string) error
+	DeleteDocument(id int64) error
 }
 
 type ReindexerHandler struct {
@@ -61,7 +61,7 @@ func (h *ReindexerHandler) CreateDocument(c *gin.Context) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
-
+	log.Println(document)
 	document, err = h.db.CreateDocument(document)
 	if err != nil {
 		log.Printf("Error inserting document: %s", err.Error())
@@ -69,13 +69,21 @@ func (h *ReindexerHandler) CreateDocument(c *gin.Context) {
 		return
 	}
 
+	log.Println(document)
 	c.JSON(http.StatusCreated, document)
 }
 
 func (h *ReindexerHandler) GetDocument(c *gin.Context) {
 	id := c.Param("id")
 
-	result, err := h.db.GetDocument(id)
+	idInt, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		log.Printf("Error fetching document: %s", err.Error())
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.db.GetDocument(idInt)
 	if err != nil {
 		log.Printf("Error fetching document: %s", err.Error())
 		c.AbortWithStatus(http.StatusNotFound)
@@ -94,6 +102,15 @@ func (h *ReindexerHandler) UpdateDocument(c *gin.Context) {
 		return
 	}
 
+	id := c.Param("id")
+
+	document.ID, err = strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		log.Printf("Error updating document: %s", err.Error())
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
 	err = h.db.UpdateDocument(&document)
 	if err != nil {
 		log.Printf("Error updating document: %s", err.Error())
@@ -108,7 +125,14 @@ func (h *ReindexerHandler) UpdateDocument(c *gin.Context) {
 func (h *ReindexerHandler) DeleteDocument(c *gin.Context) {
 	id := c.Param("id")
 
-	err := h.db.DeleteDocument(id)
+	idInt, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		log.Printf("Error deleting document: %s", err.Error())
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	err = h.db.DeleteDocument(idInt)
 	if err != nil {
 		log.Printf("Error deleting document: %s", err.Error())
 		c.AbortWithStatus(http.StatusInternalServerError)

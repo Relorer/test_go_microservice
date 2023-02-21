@@ -1,6 +1,6 @@
 reindexer:
   host: localhost
-  port: 6534
+  port: 65345
   database: "testdb"
   username: "user"
   password: "password"
