@@ -2,7 +2,9 @@ package repository
 
 import (
 	"fmt"
+	"log"
 	"relorer/test_go_microservice/internal/model"
+	"time"
 
 	"github.com/restream/reindexer/v3"
 	_ "github.com/restream/reindexer/v3/bindings/cproto"
@@ -16,6 +18,20 @@ type ReindexerParams struct {
 	Host     string
 	Port     int
 	Database string
+}
+
+func ReindexerConnectWithRetry(params *ReindexerParams, delay time.Duration) *ReindexerRepository {
+	for {
+		db, err := NewReindexerRepository(params)
+
+		if err != nil {
+			log.Printf("Error connecting: %s. Retry in %s", err, delay.String())
+		} else {
+			return db
+		}
+
+		time.Sleep(delay)
+	}
 }
 
 func NewReindexerRepository(params *ReindexerParams) (*ReindexerRepository, error) {

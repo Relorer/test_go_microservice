@@ -6,3 +6,5 @@ reindexer:
   password: "password"
 app:
   port: 3000
+  ttl: 15
+  cleanupinterval: 30

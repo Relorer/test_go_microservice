@@ -22,3 +22,5 @@ services:
       - REINDEXER.USERNAME=user
       - REINDEXER.PASSWORD=pass
       - APP.HOST=3000
+      - APP.TTL=15
+      - APP.CLEANUPINTERVAL=30

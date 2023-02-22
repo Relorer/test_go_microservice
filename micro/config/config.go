@@ -13,7 +13,9 @@ type Config struct {
 		Password string `mapstructure:"password"`
 	} `mapstructure:"reindexer"`
 	App struct {
-		Port int `mapstructure:"port"`
+		Port            int   `mapstructure:"port"`
+		TTL             int64 `mapstructure:"ttl"`
+		CleanupInterval int64 `mapstructure:"cleanupinterval"`
 	} `mapstructure:"app"`
 }
 

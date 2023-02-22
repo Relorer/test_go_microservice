@@ -21,7 +21,7 @@ type DefaultHandler struct {
 	repo Repository
 }
 
-func NewHandler(repo Repository) *DefaultHandler {
+func NewDefaultHandler(repo Repository) *DefaultHandler {
 	return &DefaultHandler{repo: repo}
 }
 
@@ -119,7 +119,6 @@ func (h *DefaultHandler) UpdateDocument(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
-
 }
 
 func (h *DefaultHandler) DeleteDocument(c *gin.Context) {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"relorer/test_go_microservice/config"
@@ -11,20 +10,6 @@ import (
 	"relorer/test_go_microservice/internal/util"
 )
 
-func reindexerConnectWithRetry(params *repository.ReindexerParams, delay time.Duration) *repository.ReindexerRepository {
-	for {
-		db, err := repository.NewReindexerRepository(params)
-
-		if err != nil {
-			log.Printf("Error connecting: %s. Retry in %s", err, delay.String())
-		} else {
-			return db
-		}
-
-		time.Sleep(delay)
-	}
-}
-
 func main() {
 
 	conf, err := config.LoadConfig()
@@ -32,19 +17,18 @@ func main() {
 		panic(fmt.Errorf("fatal error config file: %s", err))
 	}
 
-	params := &repository.ReindexerParams{
+	reindexerParams := &repository.ReindexerParams{
 		Host:     conf.Reindexer.Host,
 		Port:     conf.Reindexer.Port,
 		Database: conf.Reindexer.Database,
 	}
 
-	reindexerRepo := reindexerConnectWithRetry(params, 5*time.Second)
+	reindexerRepo := repository.ReindexerConnectWithRetry(reindexerParams, 5*time.Second)
 
-	cache := util.NewCache(15*time.Minute, 15*time.Minute)
-
+	cache := util.NewCache(time.Duration(conf.App.TTL)*time.Minute, time.Duration(conf.App.CleanupInterval)*time.Minute)
 	cacheRepo := repository.NewCacheRepository(cache, reindexerRepo)
 
-	serverHandler := server.NewHandler(cacheRepo)
+	serverHandler := server.NewDefaultHandler(cacheRepo)
 
 	server.StartServer(serverHandler, conf.App.Port)
 
