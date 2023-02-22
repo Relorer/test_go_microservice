@@ -24,3 +24,4 @@ services:
       - APP.HOST=3000
       - APP.TTL=15
       - APP.CLEANUPINTERVAL=30
+      - APP.MODE=release

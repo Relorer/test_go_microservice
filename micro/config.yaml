@@ -8,3 +8,4 @@ app:
   port: 3000
   ttl: 15
   cleanupinterval: 30
+  mode: debug

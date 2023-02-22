@@ -18,9 +18,10 @@ func main() {
 	}
 
 	reindexerParams := &repository.ReindexerParams{
-		Host:     conf.Reindexer.Host,
-		Port:     conf.Reindexer.Port,
-		Database: conf.Reindexer.Database,
+		Host:             conf.Reindexer.Host,
+		Port:             conf.Reindexer.Port,
+		Database:         conf.Reindexer.Database,
+		GenerateTestData: conf.App.Mode == "debug",
 	}
 
 	reindexerRepo := repository.ReindexerConnectWithRetry(reindexerParams, 5*time.Second)

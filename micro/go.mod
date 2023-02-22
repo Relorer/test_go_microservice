@@ -5,6 +5,7 @@ go 1.20
 require github.com/restream/reindexer/v3 v3.13.1
 
 require (
+	github.com/brianvoe/gofakeit/v6 v6.20.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.8.2 // indirect

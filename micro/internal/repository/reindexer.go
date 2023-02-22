@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"relorer/test_go_microservice/internal/model"
+	"relorer/test_go_microservice/internal/util"
 	"time"
 
 	"github.com/restream/reindexer/v3"
@@ -15,9 +16,10 @@ type ReindexerRepository struct {
 }
 
 type ReindexerParams struct {
-	Host     string
-	Port     int
-	Database string
+	Host             string
+	Port             int
+	Database         string
+	GenerateTestData bool
 }
 
 func ReindexerConnectWithRetry(params *ReindexerParams, delay time.Duration) *ReindexerRepository {
@@ -46,13 +48,28 @@ func NewReindexerRepository(params *ReindexerParams) (*ReindexerRepository, erro
 		return nil, fmt.Errorf("failed to ping Reindexer: %v", err)
 	}
 
-	db := &ReindexerRepository{
+	repo := &ReindexerRepository{
 		conn: conn,
 	}
 
 	conn.OpenNamespace("documents", reindexer.DefaultNamespaceOptions(), model.Document{})
 
-	return db, nil
+	if params.GenerateTestData {
+		if count := repo.conn.Query("documents").Exec().Count(); count == 0 {
+			repo.generateTestData()
+		}
+	}
+
+	return repo, nil
+}
+
+func (r *ReindexerRepository) generateTestData() {
+	for i := 0; i < 100000; i++ {
+		_, err := r.conn.Insert("documents", util.GenerateDocument(), "id=serial()")
+		if err != nil {
+			log.Printf("Error adding document: %s", err)
+		}
+	}
 }
 
 func (r *ReindexerRepository) GetDocuments(limit, offset int) ([]*model.Document, error) {
