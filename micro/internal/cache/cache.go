@@ -1,19 +1,19 @@
-package util
+package cache
 
 import (
 	"sync"
 	"time"
 )
 
-type Cache struct {
+type SimpleCache struct {
 	data       map[string]interface{}
 	expiration map[string]time.Time
 	mu         sync.RWMutex
 	ttl        time.Duration
 }
 
-func NewCache(ttl, cleanupInterval time.Duration) *Cache {
-	c := &Cache{
+func NewSimpleCache(ttl, cleanupInterval time.Duration) *SimpleCache {
+	c := &SimpleCache{
 		data:       make(map[string]interface{}),
 		expiration: make(map[string]time.Time),
 		ttl:        ttl,
@@ -22,7 +22,7 @@ func NewCache(ttl, cleanupInterval time.Duration) *Cache {
 	return c
 }
 
-func (c *Cache) Set(key string, value interface{}) {
+func (c *SimpleCache) Set(key string, value interface{}) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -30,26 +30,36 @@ func (c *Cache) Set(key string, value interface{}) {
 	c.expiration[key] = time.Now().Add(c.ttl)
 }
 
-func (c *Cache) Get(key string) (interface{}, bool) {
+func (c *SimpleCache) Get(key string) (interface{}, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	if value, ok := c.data[key]; ok {
-		if expiration, ok := c.expiration[key]; ok {
-			if expiration.After(time.Now()) {
-				return value, true
-			} else {
-				delete(c.data, key)
-				delete(c.expiration, key)
-			}
-		} else {
-			return value, true
-		}
+	value, ok := c.data[key]
+	if !ok {
+		return nil, false
 	}
+
+	expiration, ok := c.expiration[key]
+	if !ok {
+		return value, true
+	}
+
+	if expiration.After(time.Now()) {
+		return value, true
+	}
+
+	// Delete outdated data
+	go func() {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		delete(c.data, key)
+		delete(c.expiration, key)
+	}()
+
 	return nil, false
 }
 
-func (c *Cache) cleanup(interval time.Duration) {
+func (c *SimpleCache) cleanup(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 

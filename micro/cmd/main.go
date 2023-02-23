@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"relorer/test_go_microservice/config"
-	"relorer/test_go_microservice/internal/repository"
+	"relorer/test_go_microservice/internal/cache"
+	"relorer/test_go_microservice/internal/database"
 	"relorer/test_go_microservice/internal/server"
-	"relorer/test_go_microservice/internal/util"
+	"relorer/test_go_microservice/internal/server/handler"
 )
 
 func main() {
@@ -17,20 +18,37 @@ func main() {
 		panic(fmt.Errorf("fatal error config file: %s", err))
 	}
 
-	reindexerParams := &repository.ReindexerParams{
+	reindexerParams := &database.ReindexerParams{
 		Host:             conf.Reindexer.Host,
 		Port:             conf.Reindexer.Port,
 		Database:         conf.Reindexer.Database,
 		GenerateTestData: conf.App.Mode == "debug",
 	}
 
-	reindexerRepo := repository.ReindexerConnectWithRetry(reindexerParams, 5*time.Second)
+	reindexerConnection := database.ReindexerConnectWithRetry(reindexerParams, 5*time.Second)
 
-	cache := util.NewCache(time.Duration(conf.App.TTL)*time.Minute, time.Duration(conf.App.CleanupInterval)*time.Minute)
-	cacheRepo := repository.NewCacheRepository(cache, reindexerRepo)
+	documentRepo := database.NewDocumentReindexerRepository(reindexerConnection)
+	authorRepo := database.NewAuthorReindexerRepository(reindexerConnection)
+	commentRepo := database.NewCommentReindexerRepository(reindexerConnection)
 
-	serverHandler := server.NewDefaultHandler(cacheRepo)
+	simpleCache := cache.NewSimpleCache(time.Duration(conf.App.TTL)*time.Minute, time.Duration(conf.App.CleanupInterval)*time.Minute)
+	documentCacheRepo := cache.NewDocumentCacheRepository(simpleCache, documentRepo)
 
-	server.StartServer(serverHandler, conf.App.Port)
+	documentCRUDGroup := server.CRUDGroup{
+		Handler:   handler.NewDocumentHandler(documentCacheRepo),
+		Namespace: database.DocumentsNamespace,
+	}
+
+	authorCRUDGroup := server.CRUDGroup{
+		Handler:   handler.NewAuthorHandler(authorRepo),
+		Namespace: database.AuthorsNamespace,
+	}
+
+	commentCRUDGroup := server.CRUDGroup{
+		Handler:   handler.NewCommentHandler(commentRepo),
+		Namespace: database.CommentsNamespace,
+	}
+
+	server.StartServer(conf.App.Port, documentCRUDGroup, authorCRUDGroup, commentCRUDGroup)
 
 }
