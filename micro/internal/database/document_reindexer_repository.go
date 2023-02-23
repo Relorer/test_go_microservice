@@ -54,6 +54,7 @@ func (r *DocumentReindexerRepository) loadNestedFields(documents []*model.Docume
 			for i, value := range items {
 				doc.Authors[i] = value.(*model.Author)
 			}
+
 		}(doc)
 	}
 	wg.Wait()

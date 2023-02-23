@@ -9,7 +9,7 @@ import (
 func GenerateDocument(maxAuthorCount, totalAuthors int) *model.Document {
 	ids := make([]int64, gofakeit.IntRange(1, maxAuthorCount))
 	for i := range ids {
-		ids[i] = int64(gofakeit.IntRange(1, totalAuthors))
+		ids[i] = int64(gofakeit.IntRange(0, totalAuthors-1))
 	}
 
 	return &model.Document{
@@ -23,7 +23,7 @@ func GenerateAuthor(maxCommentsCount, totalComments int) *model.Author {
 
 	ids := make([]int64, gofakeit.IntRange(1, maxCommentsCount))
 	for i := range ids {
-		ids[i] = int64(gofakeit.IntRange(1, totalComments))
+		ids[i] = int64(gofakeit.IntRange(0, totalComments-1))
 	}
 
 	return &model.Author{

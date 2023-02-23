@@ -29,6 +29,7 @@ func (h *DocumentHandler) GetItems(c *gin.Context) {
 	limit := c.DefaultQuery("limit", "10")
 	offset := c.DefaultQuery("offset", "0")
 	join := c.DefaultQuery("join", "false") == "true"
+	strangerThings := c.DefaultQuery("stranger_things", "false") == "true"
 
 	limitInt, err := strconv.Atoi(limit)
 	if util.GinHandleError(c, err, http.StatusBadRequest) {
@@ -45,7 +46,11 @@ func (h *DocumentHandler) GetItems(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, results)
+	if strangerThings {
+		c.JSON(http.StatusOK, util.DeleteRandomFieldsFromAuthorsAndComments(results))
+	} else {
+		c.JSON(http.StatusOK, results)
+	}
 }
 
 func (h *DocumentHandler) CreateItem(c *gin.Context) {
