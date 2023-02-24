@@ -1,5 +1,7 @@
 # test_go_microservice
 
-cd micro/
-./build.sh 
-docker-compose up
+To start:
+
+* cd micro/
+* ./build.sh 
+* docker-compose up
