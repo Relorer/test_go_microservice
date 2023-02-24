@@ -9,6 +9,8 @@ import (
 	"relorer/test_go_microservice/internal/database"
 	"relorer/test_go_microservice/internal/server"
 	"relorer/test_go_microservice/internal/server/handler"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -49,6 +51,7 @@ func main() {
 		Namespace: database.CommentsNamespace,
 	}
 
-	server.StartServer(conf.App.Port, documentCRUDGroup, authorCRUDGroup, commentCRUDGroup)
+	server.ConfigureCRUDRoutes(gin.Default(), documentCRUDGroup, authorCRUDGroup, commentCRUDGroup).
+		Run(fmt.Sprintf(":%d", conf.App.Port))
 
 }

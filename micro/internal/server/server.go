@@ -19,9 +19,7 @@ type CRUDGroup struct {
 	Namespace string
 }
 
-func StartServer(port int, segments ...CRUDGroup) (err error) {
-
-	router := gin.Default()
+func ConfigureCRUDRoutes(router *gin.Engine, segments ...CRUDGroup) *gin.Engine {
 
 	for _, v := range segments {
 		group := router.Group(fmt.Sprintf("/%s", v.Namespace))
@@ -32,5 +30,5 @@ func StartServer(port int, segments ...CRUDGroup) (err error) {
 		group.DELETE("/:id", v.Handler.DeleteItem)
 	}
 
-	return router.Run(fmt.Sprintf(":%d", port))
+	return router
 }

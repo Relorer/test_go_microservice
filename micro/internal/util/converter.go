@@ -2,6 +2,7 @@ package util
 
 import (
 	"reflect"
+	"time"
 	"unicode"
 )
 
@@ -21,13 +22,18 @@ func ToMaps(obj interface{}) interface{} {
 			field := typ.Field(i)
 			jsonKey := field.Tag.Get("json")
 
-			// privacy check
 			if unicode.IsLower([]rune(field.Name)[0]) {
 				continue
 			}
 			if jsonKey == "" {
 				jsonKey = field.Name
 			}
+
+			if _, ok := value.Field(i).Interface().(time.Time); ok {
+				result[jsonKey] = value.Field(i).Interface()
+				continue
+			}
+
 			result[jsonKey] = ToMaps(value.Field(i).Interface())
 		}
 		return result
