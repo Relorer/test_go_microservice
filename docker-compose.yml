@@ -5,18 +5,19 @@ services:
     image: reindexer/reindexer:v4.9.0
     ports:
       - "9088:9088"
-      - "6534:6534"
     volumes:
       - ./reindexer_data:/reindexer_server_data
+    environment:
+      - REINDEXER_STORAGEPATH=/reindexer_server_data
 
   go_microservice:
     build: ./micro
     ports:
-      - "8080:8080"
+      - "3000:3000"
     depends_on:
       - reindexer
     environment:
-      - REINDEXER.HOST=localhost
+      - REINDEXER.HOST=reindexer
       - REINDEXER.PORT=6534
       - REINDEXER.DATABASE=test
       - REINDEXER.USERNAME=user
@@ -24,4 +25,4 @@ services:
       - APP.HOST=3000
       - APP.TTL=15
       - APP.CLEANUPINTERVAL=30
-      - APP.MODE=release
+      - APP.MODE=debug
